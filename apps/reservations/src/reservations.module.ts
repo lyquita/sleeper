@@ -4,8 +4,10 @@ import { ReservationsController } from './reservations.controller';
 import { DatabaseModule, LoggerModule } from '@app/common';
 import { ReservationDocument, ReservationSchema } from './models/reservation.schema';
 import { ReservationRepository } from './reservations.repository';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AUTH_SERVICE } from '@app/common/constants/services';
 
 @Module({
   controllers: [ReservationsController],
@@ -13,7 +15,7 @@ import * as Joi from 'joi';
   imports: [
     DatabaseModule,
     DatabaseModule.forFeature([
-      {name: ReservationDocument.name, schema:ReservationSchema}
+      { name: ReservationDocument.name, schema: ReservationSchema }
     ]),
     LoggerModule,
     ConfigModule.forRoot({
@@ -22,7 +24,20 @@ import * as Joi from 'joi';
         MONGODB_URI: Joi.string().required(),
         PORT: Joi.number().required()
       })
-    })
+    }),
+    ClientsModule.registerAsync([
+      {
+        name: AUTH_SERVICE, 
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get("AUTH_HOST"),
+            port: configService.get("AUTH_PORT")
+          }
+        }),
+        inject: [ConfigService]
+      }
+    ])
   ],
 })
-export class ReservationsModule {}
+export class ReservationsModule { }
