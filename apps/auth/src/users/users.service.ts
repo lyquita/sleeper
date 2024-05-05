@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, UnprocessableEntityException } from 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersRepository } from './users.repository';
 import * as bcrypt from 'bcryptjs'
+import * as _ from 'lodash'
 import { GetUserDto } from './dto/get-user.dto';
 
 @Injectable()
@@ -18,7 +19,10 @@ export class UsersService {
 
     private async validateCreateUserDto(createUserDto: CreateUserDto) {
         try {
-            await this.userRespository.find({ email: createUserDto.email })
+           const validateUser = await this.userRespository.findOne({ email: createUserDto.email })
+           if(_.isEmpty(validateUser)){
+            throw new Error()
+           }
         } catch (err) {
             return
         }
